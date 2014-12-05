@@ -8,7 +8,7 @@ import org.squeryl.KeyedEntity
  */
 
 case class Floors(floors: List[Floor])
-case class Floor(id: Int, rooms: List[Room])
+case class Floor(id: Int, rooms: List[RoomView])
 case class RoomView(id: Int, name: String, currentStatus: RoomStatus)
 
 case class Room(floor: Int, name: String) extends KeyedEntity[Int]{
@@ -37,25 +37,29 @@ object Room {
 
   def loadAllFloors: Floors = {
     val rooms = findAll
-    val roomsViews = rooms.map { room =>
-      val currentRoomStatus = RoomStatus.loadCurrentStatus(room.id).getOrElse(RoomStatus.defaultStatus)
-      RoomView(room.id, room.name, currentRoomStatus)
-    }
-    val splitedRooms =
+
+    splitRooms(rooms: List[Room])
+    Floors()
 
   }
 
   def splitRooms(rooms: List[Room]) = {
     def _partitionByFloor(floorNumber: Int, rooms: List[Room], floors: List[Floor]): List[Floor] ={
-      rooms match {
-        case Nil => floors
-        case _ =>
-      }
       val split = rooms.partition(room => room.floor == floorNumber)
       val floorRooms = split._1
+      val roomsToSplit = split._2
 
-      Floor(floorNumber,floorRooms)
+      val floorView = floorRooms.map { room =>
+        val currentRoomStatus = RoomStatus.loadCurrentStatus(room.id).getOrElse(RoomStatus.defaultStatus)
+        RoomView(room.id, room.name, currentRoomStatus)
+      }
+
+      roomsToSplit match {
+        case Nil => floors
+        case _ => _partitionByFloor(roomsToSplit.head.floor, roomsToSplit, floors::Floor(floorNumber, floorView))
+      }
     }
+    _partitionByFloor(rooms.head.floor, rooms, Nil)
   }
 
 }
