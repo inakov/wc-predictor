@@ -5,10 +5,10 @@
 # Home page
 GET        /                    controllers.Application.index
 
-# Rooms page
+# Rooms
 GET        /rooms               controllers.Rooms.list
 GET        /rooms/:id           controllers.Rooms.show(id: Int)
-
+GET        /floors              controllers.Rooms.listFloors
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file        controllers.Assets.at(path="/public", file)

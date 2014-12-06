@@ -13,6 +13,8 @@ case class RoomView(id: Int, name: String, currentStatus: RoomStatus)
 
 case class Room(floor: Int, name: String) extends KeyedEntity[Int]{
   override val id: Int = 0
+
+  def this() = this(0, "test")
 }
 
 
@@ -35,28 +37,33 @@ object Room {
     ).headOption
   }
 
+  def insertRoom(room: Room) = inTransaction{
+    roomsTable.insert(room.copy())
+  }
+
   def loadAllFloors: Floors = {
     val rooms = findAll
+    Floors(splitRooms(rooms))
+  }
 
-    splitRooms(rooms: List[Room])
-    Floors()
-
+  def loadRoomView(room: Room): RoomView = {
+    val currentRoomStatus = RoomStatus.loadCurrentStatus(room.id).getOrElse(RoomStatus.defaultStatus)
+    RoomView(room.id, room.name, currentRoomStatus)
   }
 
   def splitRooms(rooms: List[Room]) = {
     def _partitionByFloor(floorNumber: Int, rooms: List[Room], floors: List[Floor]): List[Floor] ={
+
       val split = rooms.partition(room => room.floor == floorNumber)
       val floorRooms = split._1
       val roomsToSplit = split._2
+      val floorView = floorRooms.map(room => loadRoomView(room))
 
-      val floorView = floorRooms.map { room =>
-        val currentRoomStatus = RoomStatus.loadCurrentStatus(room.id).getOrElse(RoomStatus.defaultStatus)
-        RoomView(room.id, room.name, currentRoomStatus)
-      }
+      val updatedFloors:List[Floor] = floors:+Floor(floorNumber, floorView)
 
       roomsToSplit match {
-        case Nil => floors
-        case _ => _partitionByFloor(roomsToSplit.head.floor, roomsToSplit, floors::Floor(floorNumber, floorView))
+        case Nil => updatedFloors
+        case _ => _partitionByFloor(roomsToSplit.head.floor, roomsToSplit, updatedFloors)
       }
     }
     _partitionByFloor(rooms.head.floor, rooms, Nil)

@@ -9,6 +9,8 @@ import org.squeryl.PrimitiveTypeMode._
 import org.squeryl.KeyedEntity
 
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
+
 import utils.EnumUtils
 
 /**
@@ -24,17 +26,23 @@ object StatusType extends Enumeration {
   val OCCUPIED = Value(4, "OCCUPIED")
 
   implicit val enumReads: Reads[StatusType] = EnumUtils.enumReads(StatusType)
-  implicit def enumWrites: Writes[StatusType] = EnumUtils.enumWrites
+  implicit val enumWrites: Writes[StatusType] = EnumUtils.enumWrites
 }
 
 case class RoomStatus(roomId: Int, statusType: StatusType, creationDate: Option[Timestamp], statusExpiration: Option[Timestamp]) extends KeyedEntity[Int]{
   override val id: Int = 0
 
-  def this() = this(0, StatusType.USABLE, new Timestamp(System.currentTimeMillis()), Option())
+  def this() = this(0, StatusType.USABLE, None, None)
 }
 
 object RoomStatus {
+
   implicit val fmt = Json.format[RoomStatus]
+
+  implicit val rds: Reads[Timestamp] = (__ \ "time").read[Long].map{ long => new Timestamp(long) }
+  implicit val wrs: Writes[Timestamp] = (__ \ "time").write[Long].contramap{ (a: Timestamp) => a.getTime }
+  implicit val timestampFmt: Format[Timestamp] = Format(rds, wrs)
+
   def fromJson(json: JsValue) = Json.fromJson[RoomStatus](json).get
   def toJson(enumCaseClass: RoomStatus) = Json.toJson(enumCaseClass)
 

@@ -4,11 +4,11 @@ version := "1.0-SNAPSHOT"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.11.1"
+scalaVersion := "2.10.0"
 
 libraryDependencies ++= Seq(
   jdbc,
   cache,
   ws,
-  "org.squeryl" % "squeryl_2.8.1" % "0.9.5-6"
+  "org.squeryl" % "squeryl_2.10" % "0.9.6-RC3"
 )
