@@ -3,13 +3,12 @@ package model
 import java.sql.Timestamp
 import java.util.Date
 
-import model.StatusType.StatusType
 
+import model.StatusType.StatusType
 import org.squeryl.PrimitiveTypeMode._
 import org.squeryl.KeyedEntity
 
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
 import utils.EnumUtils
 
@@ -34,14 +33,23 @@ case class RoomStatus(roomId: Int, statusType: StatusType, creationDate: Option[
 
   def this() = this(0, StatusType.USABLE, None, None)
 }
+case class RoomStatusView(statusType: StatusType, creationDate: Option[Timestamp], statusExpiration: Option[Timestamp])
+
 
 object RoomStatus {
 
-  implicit val fmt = Json.format[RoomStatus]
+  val TEN_MIN = 600000
+  val FIVE_MIN = 300000
+  val TREE_MIN = 180000
 
-  implicit val rds: Reads[Timestamp] = (__ \ "time").read[Long].map{ long => new Timestamp(long) }
-  implicit val wrs: Writes[Timestamp] = (__ \ "time").write[Long].contramap{ (a: Timestamp) => a.getTime }
-  implicit val timestampFmt: Format[Timestamp] = Format(rds, wrs)
+  implicit val timestampRead = new Reads[Timestamp] {
+    override def reads(json: JsValue): JsResult[Timestamp] = JsSuccess(new Timestamp(json.as[Long]))
+  }
+  implicit val timestampWrites = new Writes[Timestamp] {
+    override def writes(o: Timestamp): JsValue = Json.toJson(o.getTime)
+  }
+
+  implicit val fmt = Json.format[RoomStatus]
 
   def fromJson(json: JsValue) = Json.fromJson[RoomStatus](json).get
   def toJson(enumCaseClass: RoomStatus) = Json.toJson(enumCaseClass)
@@ -62,10 +70,48 @@ object RoomStatus {
     from(roomStatusTable)(roomStatus =>
       where(
         (roomStatus.roomId === roomId) and
-        (roomStatus.statusExpiration.getOrElse(now) < now)
+        (roomStatus.statusExpiration.getOrElse(now) > now) and
+        (roomStatus.creationDate.getOrElse(now) < now)
+
       )
       select(roomStatus)
+      orderBy(roomStatus.creationDate desc)
     ).headOption
+  }
+
+  def insertStatus(roomStatus: RoomStatus) = inTransaction{
+    roomStatusTable.insert(roomStatus)
+  }
+
+  def updateRoomStatus(roomId: Int, status: StatusType) = inTransaction{
+    val now = new Timestamp(System.currentTimeMillis)
+    def _updateRoomStatus(status: StatusType, creationTime: Timestamp): Unit ={
+      val statusExpiration = defaultStatusExpiration(status)
+
+      val newStatus = RoomStatus(
+        roomId, status, Option(creationTime), statusExpiration)
+      insertStatus(newStatus)
+
+      status match {
+        case StatusType.DANGER => _updateRoomStatus(StatusType.UNCOOL, statusExpiration.getOrElse(now))
+        case _ =>
+      }
+
+    }
+    _updateRoomStatus(status, now)
+  }
+
+  def defaultStatusExpiration(status: StatusType): Option[Timestamp] = {
+    status match {
+      case StatusType.OCCUPIED => Option(new Timestamp(System.currentTimeMillis + TEN_MIN))
+      case StatusType.DANGER => Option(new Timestamp(System.currentTimeMillis + FIVE_MIN))
+      case StatusType.UNCOOL => Option(new Timestamp(System.currentTimeMillis + FIVE_MIN + TREE_MIN))
+      case _ => None
+    }
+  }
+
+  def createStatusView(roomStatus: RoomStatus): RoomStatusView ={
+    RoomStatusView(roomStatus.statusType, roomStatus.creationDate, roomStatus.statusExpiration)
   }
 
 }

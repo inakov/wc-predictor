@@ -3,12 +3,14 @@
 # ~~~~
 
 # Home page
-GET        /                    controllers.Application.index
+GET         /                        controllers.Application.index
 
 # Rooms
-GET        /rooms               controllers.Rooms.list
-GET        /rooms/:id           controllers.Rooms.show(id: Int)
-GET        /floors              controllers.Rooms.listFloors
+GET         /rooms/:id               controllers.Rooms.show(id: Int)
+GET         /floors                  controllers.Rooms.listFloors
+
+# Status
+POST        /rooms/:id/status        controllers.RoomStatuses.update(id: Int)
 
 # Map static resources from the /public folder to the /assets URL path
-GET        /assets/*file        controllers.Assets.at(path="/public", file)
+GET         /assets/*file            controllers.Assets.at(path="/public", file)

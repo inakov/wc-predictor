@@ -9,7 +9,7 @@ import org.squeryl.KeyedEntity
 
 case class Floors(floors: List[Floor])
 case class Floor(id: Int, rooms: List[RoomView])
-case class RoomView(id: Int, name: String, currentStatus: RoomStatus)
+case class RoomView(id: Int, name: String, currentStatus: RoomStatusView)
 
 case class Room(floor: Int, name: String) extends KeyedEntity[Int]{
   override val id: Int = 0
@@ -48,7 +48,7 @@ object Room {
 
   def loadRoomView(room: Room): RoomView = {
     val currentRoomStatus = RoomStatus.loadCurrentStatus(room.id).getOrElse(RoomStatus.defaultStatus)
-    RoomView(room.id, room.name, currentRoomStatus)
+    RoomView(room.id, room.name, RoomStatus.createStatusView(currentRoomStatus))
   }
 
   def splitRooms(rooms: List[Room]) = {
