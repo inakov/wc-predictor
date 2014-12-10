@@ -3,7 +3,8 @@ package controllers
 import java.sql.Timestamp
 
 import commands.UpdateStatusCommand
-import model.RoomStatus
+import controllers.Rooms._
+import model.{Room, RoomStatus}
 import play.api.libs.json._
 import play.api.mvc.{Action, Controller}
 /**
@@ -22,7 +23,10 @@ object RoomStatuses extends Controller {
   def update(roomId: Int) = Action(parse.json) { implicit request =>
     request.body.validate[UpdateStatusCommand].map { updateCommand => {
       RoomStatus.updateRoomStatus(roomId, updateCommand.status)
-      Ok(Json.toJson(updateCommand))
+
+      Room.findById(roomId).map { room =>
+        Ok(Json.toJson(Room.loadRoomView(room)))
+      }.getOrElse(BadRequest("Bad request"))
     }
     }.recoverTotal {
       e => BadRequest("Detected error:" + JsError.toFlatJson(e))

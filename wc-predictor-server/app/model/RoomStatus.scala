@@ -33,7 +33,7 @@ case class RoomStatus(roomId: Int, statusType: StatusType, creationDate: Option[
 
   def this() = this(0, StatusType.USABLE, None, None)
 }
-case class RoomStatusView(statusType: StatusType, creationDate: Option[Timestamp], statusExpiration: Option[Timestamp])
+case class RoomStatusView(statusType: StatusType, creationDate: Option[Timestamp], statusExpiration: Option[Long])
 
 
 object RoomStatus {
@@ -111,7 +111,15 @@ object RoomStatus {
   }
 
   def createStatusView(roomStatus: RoomStatus): RoomStatusView ={
-    RoomStatusView(roomStatus.statusType, roomStatus.creationDate, roomStatus.statusExpiration)
+    RoomStatusView(roomStatus.statusType, roomStatus.creationDate, calculateExpiration(roomStatus.statusExpiration))
   }
 
+  def calculateExpiration(statusExpiration: Option[Timestamp]): Option[Long] ={
+    val now = new Timestamp(System.currentTimeMillis)
+    val expiry = statusExpiration.getOrElse(now)
+    val timeToExpiry = (expiry.getTime - now.getTime) / 1000
+
+    if( timeToExpiry > 0) Option(timeToExpiry)
+    else None
+  }
 }
