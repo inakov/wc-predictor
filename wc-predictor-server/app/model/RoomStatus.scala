@@ -21,7 +21,7 @@ object StatusType extends Enumeration {
 
   val  USABLE = Value(1, "USABLE")
   val DANGER = Value(2, "DANGER")
-  val UNCOOL = Value(3, "UNCOOL")
+  val BAD = Value(3, "BAD")
   val OCCUPIED = Value(4, "OCCUPIED")
 
   implicit val enumReads: Reads[StatusType] = EnumUtils.enumReads(StatusType)
@@ -71,8 +71,7 @@ object RoomStatus {
       where(
         (roomStatus.roomId === roomId) and
         (roomStatus.statusExpiration.getOrElse(now) > now) and
-        (roomStatus.creationDate.getOrElse(now) < now)
-
+        (roomStatus.creationDate.isNull or (roomStatus.creationDate.getOrElse(now) < now))
       )
       select(roomStatus)
       orderBy(roomStatus.creationDate desc)
@@ -86,14 +85,14 @@ object RoomStatus {
   def updateRoomStatus(roomId: Int, status: StatusType) = inTransaction{
     val now = new Timestamp(System.currentTimeMillis)
     def _updateRoomStatus(status: StatusType, creationTime: Timestamp): Unit ={
-      val statusExpiration = defaultStatusExpiration(status)
+      val statusExpiration = defaultStatusExpiration(status, creationTime)
 
       val newStatus = RoomStatus(
         roomId, status, Option(creationTime), statusExpiration)
       insertStatus(newStatus)
 
       status match {
-        case StatusType.DANGER => _updateRoomStatus(StatusType.UNCOOL, statusExpiration.getOrElse(now))
+        case StatusType.DANGER => _updateRoomStatus(StatusType.BAD, statusExpiration.getOrElse(now))
         case _ =>
       }
 
@@ -101,11 +100,11 @@ object RoomStatus {
     _updateRoomStatus(status, now)
   }
 
-  def defaultStatusExpiration(status: StatusType): Option[Timestamp] = {
+  def defaultStatusExpiration(status: StatusType, creationTime: Timestamp): Option[Timestamp] = {
     status match {
-      case StatusType.OCCUPIED => Option(new Timestamp(System.currentTimeMillis + TEN_MIN))
-      case StatusType.DANGER => Option(new Timestamp(System.currentTimeMillis + FIVE_MIN))
-      case StatusType.UNCOOL => Option(new Timestamp(System.currentTimeMillis + FIVE_MIN + TREE_MIN))
+      case StatusType.OCCUPIED => Option(new Timestamp(creationTime.getTime + TEN_MIN))
+      case StatusType.DANGER => Option(new Timestamp(creationTime.getTime + FIVE_MIN))
+      case StatusType.BAD => Option(new Timestamp(creationTime.getTime + TREE_MIN))
       case _ => None
     }
   }
