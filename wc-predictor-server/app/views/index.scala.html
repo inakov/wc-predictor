@@ -1,7 +1,36 @@
-@(message: String)
+@()
+<!DOCTYPE html>
 
-@main("Welcome to Play") {
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" type="text/css" href="assets/stylesheets/index.css" />
+        <script src="assets/javascripts/jquery-1.11.1.min.js"></script>
 
-    @play20.welcome(message)
+        <title>wc predictor</title>
+    </head>
+    <body>
+        <script type="text/javascript" src="assets/javascripts/index.js"></script>
+        <script type="text/javascript" src="assets/javascripts/wc.js"></script>
+        <script type="text/javascript">
+        	$(document).ready(
+        		function() {
+        			app.initialize();
+        		}
+        	);
+        </script>
+        
+        <div id="start">
+        	<div class="header">rooms</div>
+        	<div class="content" style="height:100%">
+				<div id="floors">
+				</div>
+		</div>
+		
+       	<div class="footer">
+       		<a href="#" id="updateBtn">update</a>
+       	</div>
+        </div>
+    </body>
+</html>
 
-}
