@@ -29,7 +29,7 @@ body {
 
 /* Portrait layout (default) */
 .app {
-    background:url(../img/logo.png) no-repeat center top; /* 170px x 200px */
+    background:url(../images/logo.png) no-repeat center top; /* 170px x 200px */
     position:absolute;             /* position in the center of the screen */
     left:50%;
     top:50%;
@@ -104,6 +104,7 @@ h1 {
 	text-align:center;
 	font-weight: bold;
 	font-size: 20px;
+	background: white;
 }
 
 .room {
@@ -113,26 +114,26 @@ h1 {
     opacity: 0.5;
     position: relative;
     text-align: center;
-    width: 45%;
+    width: 85%;
 }
 
 .usable {
-	background: url("../img/clover.png") no-repeat;
+	background: url("../images/clover.png") no-repeat;
 	background-color: green;
 }
 
 .danger {
-	background: url("../img/danger.png") no-repeat;
+	background: url("../images/danger.png") no-repeat;
 	background-color: red;
 }
 
 .bad {
-	background: url("../img/bad.png") no-repeat;
+	background: url("../images/bad.png") no-repeat;
 	background-color: yellow;
 }
 
 .occupied {
-	background: url("../img/forbidden.png") no-repeat;
+	background: url("../images/forbidden.png") no-repeat;
 	background-color : orange;
 }
 
@@ -153,10 +154,11 @@ h1 {
 .action-box {
 	background-color:white;
 	border: 4px solid transparent;
+	background-color: rgba(255, 255, 255, 0.75);
 }
 
 .action-box-clicked {
-	background-color:white;
+	background-color: rgba(255, 255, 255, 0.75);
 	border : 4px solid blue;
 }
 

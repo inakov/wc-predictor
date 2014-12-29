@@ -43,14 +43,19 @@ var app = {
     	for(var f = 0; f < data.floors.length; ++f) {
     		var floor = data.floors[f];
     		var floorDiv = $("<div/>").addClass("floor").text('floor ' + floor.id);
+    		var floorTable = $("<table/>").attr("style", "width:100%;");
+    		var floorTr = $("<tr/>");
+    		floorTable.append(floorTr);
+    		floorDiv.append(floorTable);
 			for(var i = 0; i < floor.rooms.length; ++i) {
 					var room = floor.rooms[i];
+					var td = $("<td/>").attr("style", "width:50%");
 					var div = $("<div/>")
 						.text(room.name).attr('id', room.id);
 					app.updateRoomDiv(room, div);
 					
-					floorDiv.append(div );
-					floorDiv.append("<br/>");
+					td.append(div );
+					floorTr.append(td);
 			}
 			floors.append(floorDiv);
 			floors.append("<br/>");
